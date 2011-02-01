@@ -131,7 +131,7 @@ class Merchant_Billing_CreditCard extends Merchant_Billing_CreditCardMethods {
 
         if ( self::valid_month($this->start_month) === false )
                 $this->errors->add('start month', 'is invalid');
-        if ( self::valid_month($this->start_year) === false )
+        if ( self::valid_start_year($this->start_year) === false )
                 $this->errors->add('start year', 'is invalid');
         if ( self::valid_issue_number($this->issue_number) === false )
                 $this->errors->add('issue number', 'cannot be empty');
