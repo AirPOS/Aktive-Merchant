@@ -7,7 +7,7 @@
  * @author  Andreas Kollaros
  * @license http://www.opensource.org/licenses/mit-license.php
  */
-abstract class Merchant_Billing_Gateway {
+abstract class Merchant_Billing_Gateway extends Merchant_Billing_Expect {
 
   protected $money_format = 'dollars'; # or cents
   protected $default_currency;
@@ -15,7 +15,7 @@ abstract class Merchant_Billing_Gateway {
   protected $supported_cardtypes = array('visa', 'master', 'american_express', 'switch', 'solo', 'maestro');
   protected $homepage_url;
   protected $display_name;
-  
+
   private $DEBIT_CARDS = array('switch', 'solo');
 
   private $CURRENCY_CODES = array(
@@ -237,12 +237,11 @@ abstract class Merchant_Billing_Gateway {
     if (null === $money)
       return null;
 
-    $money = number_format($money, 2);
     $cents = $money * 100;
-    if (!is_numeric($money) || $cents < 0) {
+    if (!is_numeric($money) || $money < 0) {
       throw new Exception('money amount must be a positive Integer in cents.');
     }
-    return ($this->money_format == 'cents') ? $cents : $money;
+    return ($this->money_format == 'cents') ? number_format($cents,0,'','') : number_format($money,2);
   }
 
   protected function card_brand($source) {
@@ -260,10 +259,12 @@ abstract class Merchant_Billing_Gateway {
    * PostsData
    */
   protected function ssl_get($endpoint, $data, $options = array()) {
+    if ( isset($this->expects[__FUNCTION__]) ) return $this->expects[__FUNCTION__];
     return $this->ssl_request('get', $endpoint, $data, $options);
   }
 
   protected function ssl_post($endpoint, $data, $options = array()) {
+    if ( isset($this->expects[__FUNCTION__]) ) return $this->expects[__FUNCTION__];
     return $this->ssl_request('post', $endpoint, $data, $options );
   }
 
