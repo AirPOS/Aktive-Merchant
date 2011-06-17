@@ -13,18 +13,20 @@ class Merchant_Billing_Centinel extends Merchant_Billing_Gateway {
   const LIVE_URL = 'https://centinel.cardinalcommerce.com/maps/txns.asp';
 
   # The countries the gateway supports merchants from as 2 digit ISO country codes
-  protected $supported_countries = array('US', 'GR');
+  public static $supported_countries = array('US', 'GR');
 
   # The card types supported by the payment gateway
-  protected $homepage_url = 'http://www.cardinalcommerce.com';
+  public static $homepage_url = 'http://www.cardinalcommerce.com';
 
   # The homepage URL of the gateway
-  protected $display_name = 'Centinel 3D Secure';
-
+  public static $display_name = 'Centinel 3D Secure';
+  
+  public static $money_format = 'cents';
+  
+  public static $default_currency = 'EUR';
+  
   private $options;
   private $post;
-  public  $money_format = 'cents';
-  public  $default_currency = 'EUR';
 
   
   private $VERSION = '1.7';
@@ -33,7 +35,7 @@ class Merchant_Billing_Centinel extends Merchant_Billing_Gateway {
     $this->required_options('login, password, processor_id', $options);
 
     if ( isset( $options['currency'] ) )
-      $this->default_currency = $options['currency'];
+      self::$default_currency = $options['currency'];
 
     $this->options = $options;
   }
@@ -67,10 +69,10 @@ XML;
     $order_number = isset( $options['order_id'] ) ? $options['order_id'] : null;
 
     $amount = $this->is_test() ? $this->amount("1") : $this->amount($money);
-
+    $default_currency = self::$default_currency;
     $this->post .= <<<XML
       <OrderNumber>{$order_number}</OrderNumber>
-      <CurrencyCode>{$this->currency_lookup($this->default_currency)}</CurrencyCode>
+      <CurrencyCode>{$this->currency_lookup($default_currency)}</CurrencyCode>
       <Amount>{$amount}</Amount>
 XML;
   }
@@ -130,23 +132,21 @@ XML;
 
     $data = $this->ssl_post($url, $this->post_data($action, $parameters,array('timeout' => '10')));
 
+    $options = array('test' => $this->is_test());
+
     switch ($action) {
       case 'cmpi_lookup':
         $response = $this->parse_cmpi_lookup($data);
-        $options = array('authorization' => $response['transaction_id']);
+        $options['authorization'] = $response['transaction_id'];
         break;
       case 'cmpi_authenticate':
         $response = $this->parse_cmpi_authenticate($data);
-        $options = array();
         break;
 
       default:
         $response = $this->parse($data);
         break;
     }
-    
-
-    $test_mode = $this->is_test();
 
     return new Merchant_Billing_CentinelResponse($this->success_from($response),
             $this->message_from($response), $response, $options);
